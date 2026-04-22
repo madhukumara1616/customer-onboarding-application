@@ -1,149 +1,207 @@
 ```mermaid
 %% TITLE: System Architecture
 graph TD
-  subgraph L1["Presentation"]
-    p1["Ops Dash"]
+  subgraph Presentation_Layer["Presentation Layer"]
+    actor_pc["prospective customer"]
+    svc_ui["Onboarding UI Form Service"]
   end
 
-  subgraph L2["Control"]
-    c1["Workflow Ork"]
+  subgraph Application_Layer["Application Layer"]
+    svc_personal["Personal Details Capture Service"]
+    svc_contact["Contact Details Capture Service"]
+    svc_residency["Residency and Visa Assessment Service"]
+    svc_service_status["Service Member/Veteran Status Service"]
+    svc_doc["Document Upload and Storage Service"]
+    svc_validation["Data Validation Service"]
   end
 
-  subgraph L3["Application"]
-    a1["Story Parse"]
-    a2["Layer Class"]
-    a3["Comp Type"]
-    a4["Dep Map"]
-    a5["Group Name"]
-    a6["Mermaid Gen"]
+  subgraph Integration_Layer["Integration Layer"]
+    ext_email["Email validation service"]
+    ext_docstore["Document storage/content management system"]
+    ext_kyc["Identity/KYC verification provider"]
   end
 
-  subgraph L4["Data"]
-    d1["Stories DB"]
-    d2["Diag Store"]
+  subgraph Data_Layer["Data Layer"]
+    svc_persist["Onboarding Profile Persistence Service"]
+    ent_profile["Customer Onboarding Profile"]
   end
 
-  p1 --> c1
-  c1 --> a1
-  a1 --> a2
-  a2 --> a3
-  a3 --> a4
-  a4 --> a5
-  a5 --> a6
-  a1 --> d1
-  a6 --> d2
-  d2 --> p1
+  actor_pc --> svc_ui
+  svc_ui --> svc_personal
+  svc_ui --> svc_contact
+  svc_ui --> svc_residency
+  svc_ui --> svc_service_status
+  svc_ui --> svc_doc
+  svc_personal --> svc_validation
+  svc_contact --> svc_validation
+  svc_residency --> svc_validation
+  svc_service_status --> svc_validation
+  svc_doc --> svc_validation
+  svc_validation --> ext_email
+  svc_doc --> ext_docstore
+  svc_validation -.-> ext_kyc
+  svc_ui --> svc_persist
+  svc_persist --> ent_profile
 ```
 
 ```mermaid
 %% TITLE: Component Diagram
 graph TD
-  subgraph T1["Presentation"]
-    ui1["Diag UI"]
-    ui2["Story UI"]
-  end
+  actor_pc["prospective customer"]
+  svc_ui["Onboarding UI Form Service"]
+  svc_personal["Personal Details Capture Service"]
+  svc_contact["Contact Details Capture Service"]
+  svc_residency["Residency and Visa Assessment Service"]
+  svc_service_status["Service Member/Veteran Status Service"]
+  svc_doc["Document Upload and Storage Service"]
+  svc_validation["Data Validation Service"]
+  svc_persist["Onboarding Profile Persistence Service"]
+  ext_email["Email validation service"]
+  ext_docstore["Document storage/content management system"]
+  ext_kyc["Identity/KYC verification provider"]
 
-  subgraph T2["Application"]
-    app1["Story Parser"]
-    app2["Layer Class"]
-    app3["Comp Typer"]
-    app4["Dep Mapper"]
-    app5["Name Grouper"]
-    app6["Mermaid Gen"]
-  end
+  actor_pc --> svc_ui
 
-  subgraph T3["Data"]
-    db1["Stories DB"]
-    db2["Diags DB"]
-  end
+  svc_ui --> svc_personal
+  svc_ui --> svc_contact
+  svc_ui --> svc_residency
+  svc_ui --> svc_service_status
+  svc_ui --> svc_doc
+  svc_ui --> svc_persist
 
-  ui2 --> app1
-  app1 --> app2
-  app2 --> app3
-  app3 --> app4
-  app4 --> app5
-  app5 --> app6
-  app1 --> db1
-  app6 --> db2
-  db2 --> ui1
+  svc_personal --> svc_validation
+  svc_contact --> svc_validation
+  svc_residency --> svc_validation
+  svc_service_status --> svc_validation
+  svc_doc --> svc_validation
+
+  svc_validation --> ext_email
+  svc_validation -.-> ext_kyc
+  svc_doc --> ext_docstore
+  svc_persist --> ext_kyc
 ```
 
 ```mermaid
-%% TITLE: Business Architecture
+%% TITLE: Business Process Flow
 graph TD
-  b1["Capture Story"]
-  b2["Parse RoleAct"]
-  b3["Extract Keywords"]
-  b4["Classify Layer"]
-  b5["Type Comp"]
-  b6["Map Depends"]
-  b7["Group Name"]
-  b8["Gen Diagrams"]
-  b9["Review Output"]
+  subgraph prospective_customer["prospective customer"]
+    step_open["Open customer onboarding screen"]
+    step_enter_personal["Enter personal details (title, full name, date of birth, nationality, marital status)"]
+    step_enter_contact["Enter contact details (phone number, email address)"]
+    step_residency["Provide residency and visa details (residency status, UK residence status, visa type and expiry, years in UK)"]
+    step_service["Answer servicemember or veteran status (Yes/No)"]
+    step_upload["Upload proof document"]
+    step_save["Save onboarding details"]
+  end
 
-  b1 --> b2
-  b2 --> b3
-  b3 --> b4
-  b4 --> b5
-  b5 --> b6
-  b6 --> b7
-  b7 --> b8
-  b8 --> b9
+  subgraph Onboarding_UI_Form_Service["Onboarding UI Form Service"]
+    step_display["Display data capture form"]
+  end
+
+  val_dob{"Validate date of birth is a valid date"}
+  val_email{"Validate email address format"}
+  val_visa_expiry{"Validate visa expiry is a valid date"}
+  val_years_numeric{"Validate years in UK is numeric"}
+  val_service_yesno{"Validate servicemember or veteran status is either Yes or No"}
+  val_doc{"Validate proof document is provided"}
+
+  step_open --> step_display --> step_enter_personal --> val_dob
+  val_dob -- Yes --> step_enter_contact --> val_email
+  val_dob -- No --> step_enter_personal
+
+  val_email -- Yes --> step_residency --> val_visa_expiry
+  val_email -- No --> step_enter_contact
+
+  val_visa_expiry -- Yes --> val_years_numeric
+  val_visa_expiry -- No --> step_residency
+
+  val_years_numeric -- Yes --> step_service --> val_service_yesno
+  val_years_numeric -- No --> step_residency
+
+  val_service_yesno -- Yes --> step_upload --> val_doc
+  val_service_yesno -- No --> step_service
+
+  val_doc -- Yes --> step_save
+  val_doc -- No --> step_upload
 ```
 
 ```mermaid
-%% TITLE: Network Architecture
+%% TITLE: Network & Deployment Architecture
 graph LR
-  n1["User"]
-  subgraph n2["Internet"]
-    net1["TLS"]
-  end
-  subgraph n3["DMZ"]
-    dmz1["WAF"]
-    dmz2["LB"]
-  end
-  subgraph n4["App Net"]
-    app1["Web UI"]
-    app2["API Svc"]
-    app3["Worker"]
-  end
-  subgraph n5["Data Net"]
-    data1["Stories DB"]
-    data2["Diags DB"]
+  subgraph Client_Zone["Client Zone"]
+    actor_pc["prospective customer"]
   end
 
-  n1 --> net1 --> dmz1 --> dmz2 --> app1
-  app1 --> app2
-  app2 --> app3
-  app2 --> data1
-  app3 --> data2
-  data2 --> app1
+  subgraph DMZ["DMZ"]
+    svc_ui["Onboarding UI Form Service"]
+  end
+
+  subgraph Application_Zone["Application Zone"]
+    svc_personal["Personal Details Capture Service"]
+    svc_contact["Contact Details Capture Service"]
+    svc_residency["Residency and Visa Assessment Service"]
+    svc_service_status["Service Member/Veteran Status Service"]
+    svc_doc["Document Upload and Storage Service"]
+    svc_validation["Data Validation Service"]
+    svc_persist["Onboarding Profile Persistence Service"]
+  end
+
+  subgraph Data_Zone["Data Zone"]
+    ext_docstore["Document storage/content management system"]
+    ext_email["Email validation service"]
+    ext_kyc["Identity/KYC verification provider"]
+  end
+
+  actor_pc --> svc_ui
+  svc_ui --> svc_personal
+  svc_ui --> svc_contact
+  svc_ui --> svc_residency
+  svc_ui --> svc_service_status
+  svc_ui --> svc_doc
+  svc_ui --> svc_persist
+  svc_personal --> svc_validation
+  svc_contact --> svc_validation
+  svc_residency --> svc_validation
+  svc_service_status --> svc_validation
+  svc_doc --> ext_docstore
+  svc_validation --> ext_email
+  svc_validation -.-> ext_kyc
+  svc_persist --> ext_kyc
 ```
 
 ```mermaid
 %% TITLE: Sequence Diagram
 sequenceDiagram
-  participant U as User
-  participant UI as DiagUI
-  participant API as APISvc
-  participant P as StoryParser
-  participant L as LayerClass
-  participant T as CompTyper
-  participant D as DepMapper
-  participant N as NameGrouper
-  participant G as MermaidGen
-  participant S as DiagsDB
+  participant prospective_customer as prospective customer
+  participant Onboarding_UI_Form_Service as Onboarding UI Form Service
+  participant Personal_Details_Capture_Service as Personal Details Capture Service
+  participant Contact_Details_Capture_Service as Contact Details Capture Service
+  participant Residency_and_Visa_Assessment_Service as Residency and Visa Assessment Service
+  participant Service_Member_Veteran_Status_Service as Service Member/Veteran Status Service
+  participant Document_Upload_and_Storage_Service as Document Upload and Storage Service
+  participant Data_Validation_Service as Data Validation Service
+  participant Onboarding_Profile_Persistence_Service as Onboarding Profile Persistence Service
+  participant Email_validation_service as Email validation service
 
-  U->>UI: Submit stories
-  UI->>API: POST stories
-  API->>P: Parse stories
-  P->>L: Classify layers
-  L->>T: Type comps
-  T->>D: Map deps
-  D->>N: Group name
-  N->>G: Build diagrams
-  G->>S: Save diagrams
-  S-->>API: Diag refs
-  API-->>UI: Mermaid blocks
-  UI-->>U: Render diagrams
+  prospective_customer->>Onboarding_UI_Form_Service: Open customer onboarding screen
+  Onboarding_UI_Form_Service->>prospective_customer: Display data capture form
+  prospective_customer->>Personal_Details_Capture_Service: Enter personal details (title, full name, date of birth, nationality, marital status)
+  Personal_Details_Capture_Service->>Data_Validation_Service: Validate date of birth is a valid date
+  prospective_customer->>Contact_Details_Capture_Service: Enter contact details (phone number, email address)
+  Contact_Details_Capture_Service->>Data_Validation_Service: Validate email address format
+  Data_Validation_Service->>Email_validation_service: Validate email address format
+  alt Validate email address format fails
+    Data_Validation_Service-->>Contact_Details_Capture_Service: Email Id invalid
+    Contact_Details_Capture_Service-->>prospective_customer: Re-enter Email Id
+  else Validate email address format passes
+    prospective_customer->>Residency_and_Visa_Assessment_Service: Provide residency and visa details (residency status, UK residence status, visa type and expiry, years in UK)
+    Residency_and_Visa_Assessment_Service->>Data_Validation_Service: Validate visa expiry is a valid date
+    Data_Validation_Service-->>Residency_and_Visa_Assessment_Service: Validate years in UK is numeric
+    prospective_customer->>Service_Member_Veteran_Status_Service: Answer servicemember or veteran status (Yes/No)
+    Service_Member_Veteran_Status_Service->>Data_Validation_Service: Validate servicemember or veteran status is either Yes or No
+    prospective_customer->>Document_Upload_and_Storage_Service: Upload proof document
+    Document_Upload_and_Storage_Service->>Data_Validation_Service: Validate proof document is provided
+    Onboarding_UI_Form_Service->>Onboarding_Profile_Persistence_Service: Save onboarding details
+    Onboarding_Profile_Persistence_Service-->>Onboarding_UI_Form_Service: Customer Onboarding Profile saved
+  end
 ```
